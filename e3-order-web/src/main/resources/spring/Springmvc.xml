@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:p="http://www.springframework.org/schema/p"
+	xmlns:context="http://www.springframework.org/schema/context"
+	xmlns:dubbo="http://code.alibabatech.com/schema/dubbo" 
+	xmlns:mvc="http://www.springframework.org/schema/mvc"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-4.2.xsd
+       	http://code.alibabatech.com/schema/dubbo http://code.alibabatech.com/schema/dubbo/dubbo.xsd
+        http://www.springframework.org/schema/mvc http://www.springframework.org/schema/mvc/spring-mvc-4.2.xsd
+        http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context-4.2.xsd">
+
+	<context:component-scan base-package="cn.e3.order.controller" />
+	
+	<!-- 配置读取资源文件 -->
+	<context:property-placeholder location="classpath:conf/resource.properties"/>
+	<mvc:annotation-driven />
+	<bean
+		class="org.springframework.web.servlet.view.InternalResourceViewResolver">
+		<property name="prefix" value="/WEB-INF/jsp/" />
+		<property name="suffix" value=".jsp" />
+	</bean>
+	
+	<!-- 引用dubbo服务 -->
+	<dubbo:application name="e3-cart-web"/>
+	<dubbo:registry protocol="zookeeper" address="192.168.25.129:2181" timeout="600000"/>	
+	<dubbo:reference interface="cn.e3.sso.service.TbUserService" id="tbUserService" timeout="600000" />
+	<dubbo:reference interface="cn.e3.cart.service.CartService" id="cartService"  timeout="600000"/>
+	<dubbo:reference interface="cn.e3.order.service.OrderService" id="orderService"  timeout="600000"/>
+	   <!-- 定义拦截器 -->
+	<mvc:interceptors>
+			<mvc:interceptor>
+				<mvc:mapping path="/**"/>
+				<bean class="cn.e3.order.interceptor.LoginInterceptor"></bean>
+			</mvc:interceptor>
+	</mvc:interceptors>
+	
+	
+	<!-- 阻止拦截静态文件 -->
+
+<mvc:resources mapping="/js/**" location="/js/" />    
+<mvc:resources mapping="/css/**" location="/css/" />    
+	
+	<!-- 定义文件上传解析器 -->
+	<bean id="multipartResolver"
+		class="org.springframework.web.multipart.commons.CommonsMultipartResolver">
+		<!-- 设定默认编码 -->
+		<property name="defaultEncoding" value="UTF-8"></property>
+		<!-- 设定文件上传的最大值5MB，5*1024*1024 -->
+		<property name="maxUploadSize" value="5242880"></property>
+	</bean>
+
+</beans>
